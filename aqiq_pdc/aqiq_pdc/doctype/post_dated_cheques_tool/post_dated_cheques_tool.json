@@ -1,0 +1,155 @@
+{
+   "actions": [],
+   "allow_rename": 1,
+   "autoname": "format:PTC-.{#####}",
+   "creation": "2024-07-22 11:44:30.981616",
+   "doctype": "DocType",
+   "engine": "InnoDB",
+   "field_order": [
+    "filters_section",
+    "company",
+    "from_date",
+    "get_posted_dated_cheques",
+    "column_break_autf",
+    "cost_center",
+    "department",
+    "column_break_qasd",
+    "to_date",
+    "default_bank_account",
+    "account_currency",
+    "apply_bank",
+    "cheques_details_section",
+    "details",
+    "section_break_nxcb",
+    "amended_from"
+   ],
+   "fields": [
+    {
+     "fieldname": "section_break_nxcb",
+     "fieldtype": "Section Break"
+    },
+    {
+     "fieldname": "amended_from",
+     "fieldtype": "Link",
+     "label": "Amended From",
+     "no_copy": 1,
+     "options": "Post Dated Cheques Tool",
+     "print_hide": 1,
+     "read_only": 1,
+     "search_index": 1
+    },
+    {
+     "fieldname": "filters_section",
+     "fieldtype": "Section Break",
+     "label": "Filters"
+    },
+    {
+     "fieldname": "company",
+     "fieldtype": "Link",
+     "label": "Company",
+     "options": "Company"
+    },
+    {
+     "fieldname": "from_date",
+     "fieldtype": "Date",
+     "label": "From Date"
+    },
+    {
+     "fieldname": "get_posted_dated_cheques",
+     "fieldtype": "Button",
+     "label": "Get Posted Dated Cheques"
+    },
+    {
+     "fieldname": "column_break_autf",
+     "fieldtype": "Column Break"
+    },
+    {
+     "fieldname": "cost_center",
+     "fieldtype": "Link",
+     "label": "Cost Center",
+     "options": "Cost Center",
+     "reqd": 0
+    },
+    {
+     "fieldname": "department",
+     "fieldtype": "Link",
+     "label": "Department",
+     "options": "Department",
+     "reqd": 0
+    },
+    {
+     "fieldname": "column_break_qasd",
+     "fieldtype": "Column Break"
+    },
+    {
+     "fieldname": "to_date",
+     "fieldtype": "Date",
+     "label": "To Date"
+    },
+    {
+     "fieldname": "default_bank_account",
+     "fieldtype": "Link",
+     "label": "Default Bank Account",
+     "options": "Account"
+    },
+    {
+     "fetch_from": "default_bank_account.account_currency",
+     "fieldname": "account_currency",
+     "fieldtype": "Link",
+     "label": "Currency",
+     "options": "Currency",
+     "read_only": 1
+    },
+    {
+     "fieldname": "apply_bank",
+     "fieldtype": "Button",
+     "label": "Apply Default Bank Account to All Rows"
+    },
+    {
+     "fieldname": "cheques_details_section",
+     "fieldtype": "Section Break",
+     "label": "Cheques Details"
+    },
+    {
+     "fieldname": "details",
+     "fieldtype": "Table",
+     "label": "Details",
+     "options": "Post PT Cheques Detail"
+    }
+   ],
+   "index_web_pages_for_search": 1,
+   "is_submittable": 1,
+   "links": [
+    {
+     "link_doctype": "Payment Entry",
+     "link_fieldname": "custom_post_dated_cheque_reference"
+    }
+   ],
+   "modified": "2024-07-22 15:48:56.287301",
+   "modified_by": "Administrator",
+   "module": "Aqiq Pdc",
+   "name": "Post Dated Cheques Tool",
+   "naming_rule": "Expression",
+   "owner": "Administrator",
+   "permissions": [
+    {
+     "create": 1,
+     "delete": 1,
+     "email": 1,
+     "export": 1,
+     "print": 1,
+     "read": 1,
+     "report": 1,
+     "role": "System Manager",
+     "share": 1,
+     "submit": 1,
+     "write": 1
+    }
+   ],
+   "sort_field": "modified",
+   "sort_order": "DESC",
+   "states": [],
+   "track_changes": 1,
+   "track_seen": 1,
+   "track_views": 1
+  }
