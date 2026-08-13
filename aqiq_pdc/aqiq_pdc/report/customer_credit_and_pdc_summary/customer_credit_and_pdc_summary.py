@@ -27,8 +27,14 @@ def get_ageing_bucket(overdue_days):
 
 def get_columns():
     return [
-        {"label": _("Customer"), "fieldname": "customer", "fieldtype": "Link", "options": "Customer", "width": 220},
-        {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
+        {"label": _("Customer"), "fieldname": "customer", "fieldtype": "Link", "options": "Customer", "width": 180},
+        # Customer's own ID (naming_series-based) and its Customer Name field
+        # can genuinely differ (e.g. renamed since creation) - showing both
+        # avoids ambiguity about which real business the row is for. Company
+        # is dropped as a column since it's a required filter already - every
+        # row on screen is always the same company, so repeating it per row
+        # is pure clutter.
+        {"label": _("Customer Name"), "fieldname": "customer_name", "fieldtype": "Data", "width": 200},
         {"label": _("Credit Limit"), "fieldname": "credit_limit", "fieldtype": "Currency", "width": 120},
         {"label": _("Outstanding"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 120},
         {"label": _("Available Credit"), "fieldname": "available_credit", "fieldtype": "Currency", "width": 130},
@@ -36,6 +42,7 @@ def get_columns():
         {"label": _("Ageing"), "fieldname": "ageing_bucket", "fieldtype": "Data", "width": 100},
         {"label": _("PDC Pending Count"), "fieldname": "pdc_pending_count", "fieldtype": "Int", "width": 130},
         {"label": _("PDC Pending Amount"), "fieldname": "pdc_pending_amount", "fieldtype": "Currency", "width": 140},
+        {"label": _("PDC Amount Not Covered"), "fieldname": "pdc_amount_not_covered", "fieldtype": "Currency", "width": 160},
         {"label": _("Bounce Cheque Count"), "fieldname": "bounce_count", "fieldtype": "Int", "width": 140},
         {"label": _("Credit Overrides"), "fieldname": "override_count", "fieldtype": "Int", "width": 120},
         {"label": _("Total Exceeded Amount"), "fieldname": "override_exceeded_total", "fieldtype": "Currency", "width": 160},
@@ -43,7 +50,8 @@ def get_columns():
 
 
 def get_data(filters):
-    from erpnext.selling.doctype.customer.customer import get_credit_limit, get_customer_outstanding
+    from erpnext.accounts.utils import get_balance_on
+    from erpnext.selling.doctype.customer.customer import get_credit_limit
 
     company = filters.company
     from_date = filters.get("from_date")
@@ -59,8 +67,15 @@ def get_data(filters):
 
     rows = []
     for customer in customers:
+        customer_name = frappe.db.get_value("Customer", customer, "customer_name")
         credit_limit = get_credit_limit(customer, company)
-        outstanding = get_customer_outstanding(customer, company)
+        # AR ledger balance (matches Accounts Receivable Summary's own
+        # Outstanding figure) - NOT the same calculation ERPNext's credit
+        # limit gate uses internally (erpnext...customer.get_customer_outstanding,
+        # which also folds in un-invoiced Sales Orders/Delivery Notes). This
+        # column is for visibility/reporting; it isn't what actually decides
+        # whether a Sales Order/Invoice gets blocked.
+        outstanding = get_balance_on(party_type="Customer", party=customer, company=company, date=as_on_date)
 
         # Overdue Days = how many days past due the OLDEST unpaid Sales
         # Invoice is, as of Ageing As On Date - 0/blank if nothing is
@@ -114,6 +129,7 @@ def get_data(filters):
 
         rows.append({
             "customer": customer,
+            "customer_name": customer_name,
             "company": company,
             "credit_limit": credit_limit,
             "outstanding_amount": outstanding,
@@ -122,6 +138,10 @@ def get_data(filters):
             "ageing_bucket": get_ageing_bucket(overdue_days),
             "pdc_pending_count": pdc_count,
             "pdc_pending_amount": flt(pdc_amount),
+            # How much of what's owed has no pending cheque promised against
+            # it at all - floored at 0 once pending PDCs already cover (or
+            # exceed) the outstanding balance.
+            "pdc_amount_not_covered": max(0, flt(outstanding) - flt(pdc_amount)),
             "bounce_count": bounce_count,
             "override_count": len(override_rows),
             "override_exceeded_total": sum(flt(r.exceeded_by) for r in override_rows),
