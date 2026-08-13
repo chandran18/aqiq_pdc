@@ -5,24 +5,12 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate
 
-# Same 30-day bucketing ERPNext's own Accounts Receivable report uses
-# (erpnext...accounts_receivable.py: ranges "30,60,90,120" by default).
-AGEING_RANGE_DAYS = [30, 60, 90, 120]
-AGEING_LABELS = ["0-30", "30-60", "60-90", "90-120", "120-Above"]
-
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
     if not filters.company:
         frappe.throw(_("Please select a Company"))
     return get_columns(), get_data(filters)
-
-
-def get_ageing_bucket(overdue_days):
-    if not overdue_days or overdue_days <= 0:
-        return _("Not Due")
-    index = next((i for i, days in enumerate(AGEING_RANGE_DAYS) if overdue_days <= days), len(AGEING_RANGE_DAYS))
-    return AGEING_LABELS[index]
 
 
 def get_columns():
@@ -35,11 +23,11 @@ def get_columns():
         # row on screen is always the same company, so repeating it per row
         # is pure clutter.
         {"label": _("Customer Name"), "fieldname": "customer_name", "fieldtype": "Data", "width": 200},
+        {"label": _("Payment Terms Template"), "fieldname": "payment_terms", "fieldtype": "Link", "options": "Payment Terms Template", "width": 160},
         {"label": _("Credit Limit"), "fieldname": "credit_limit", "fieldtype": "Currency", "width": 120},
         {"label": _("Outstanding"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 120},
         {"label": _("Available Credit"), "fieldname": "available_credit", "fieldtype": "Currency", "width": 130},
         {"label": _("Overdue Days"), "fieldname": "overdue_days", "fieldtype": "Int", "width": 110},
-        {"label": _("Ageing"), "fieldname": "ageing_bucket", "fieldtype": "Data", "width": 100},
         {"label": _("PDC Pending Count"), "fieldname": "pdc_pending_count", "fieldtype": "Int", "width": 130},
         {"label": _("PDC Pending Amount"), "fieldname": "pdc_pending_amount", "fieldtype": "Currency", "width": 140},
         {"label": _("PDC Amount Not Covered"), "fieldname": "pdc_amount_not_covered", "fieldtype": "Currency", "width": 160},
@@ -67,7 +55,7 @@ def get_data(filters):
 
     rows = []
     for customer in customers:
-        customer_name = frappe.db.get_value("Customer", customer, "customer_name")
+        customer_name, payment_terms = frappe.db.get_value("Customer", customer, ["customer_name", "payment_terms"])
         credit_limit = get_credit_limit(customer, company)
         # AR ledger balance (matches Accounts Receivable Summary's own
         # Outstanding figure) - NOT the same calculation ERPNext's credit
@@ -130,12 +118,12 @@ def get_data(filters):
         rows.append({
             "customer": customer,
             "customer_name": customer_name,
+            "payment_terms": payment_terms,
             "company": company,
             "credit_limit": credit_limit,
             "outstanding_amount": outstanding,
             "available_credit": (flt(credit_limit) - flt(outstanding)) if credit_limit else None,
             "overdue_days": overdue_days,
-            "ageing_bucket": get_ageing_bucket(overdue_days),
             "pdc_pending_count": pdc_count,
             "pdc_pending_amount": flt(pdc_amount),
             # How much of what's owed has no pending cheque promised against

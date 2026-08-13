@@ -19,10 +19,10 @@ frappe.query_reports["Customer Credit and PDC Summary"] = {
 		},
 		{
 			fieldname: "as_on_date",
-			label: __("Ageing As On Date"),
+			label: __("Overdue As On Date"),
 			fieldtype: "Date",
 			default: frappe.datetime.get_today(),
-			description: __("Overdue Days and Ageing are computed against this date. Defaults to today."),
+			description: __("Overdue Days is computed against this date. Defaults to today."),
 		},
 		{
 			fieldname: "from_date",
@@ -63,18 +63,6 @@ frappe.query_reports["Customer Credit and PDC Summary"] = {
 				customer: data.customer,
 				company: data.company,
 			})}">${value}</a>`;
-		}
-
-		if (column.fieldname === "ageing_bucket") {
-			let colors = {
-				"Not Due": "gray",
-				"0-30": "yellow",
-				"30-60": "orange",
-				"60-90": "orange",
-				"90-120": "red",
-				"120-Above": "red",
-			};
-			value = `<span class="indicator-pill ${colors[data.ageing_bucket] || "gray"}">${data.ageing_bucket}</span>`;
 		}
 
 		return value;
