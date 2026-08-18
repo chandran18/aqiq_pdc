@@ -27,10 +27,10 @@ def get_columns():
         {"label": _("Credit Limit"), "fieldname": "credit_limit", "fieldtype": "Currency", "width": 120},
         {"label": _("Outstanding"), "fieldname": "outstanding_amount", "fieldtype": "Currency", "width": 120},
         {"label": _("Available Credit"), "fieldname": "available_credit", "fieldtype": "Currency", "width": 130},
-        {"label": _("Overdue Days"), "fieldname": "overdue_days", "fieldtype": "Int", "width": 110},
+        {"label": _("Overdue Invoice"), "fieldname": "overdue_invoice", "fieldtype": "Link", "options": "Sales Invoice", "width": 150},
         {"label": _("PDC Pending Count"), "fieldname": "pdc_pending_count", "fieldtype": "Int", "width": 130},
         {"label": _("PDC Pending Amount"), "fieldname": "pdc_pending_amount", "fieldtype": "Currency", "width": 140},
-        {"label": _("PDC Amount Not Covered"), "fieldname": "pdc_amount_not_covered", "fieldtype": "Currency", "width": 160},
+        {"label": _("PDC Amount Not Clear"), "fieldname": "pdc_amount_not_covered", "fieldtype": "Currency", "width": 160},
         {"label": _("Bounce Cheque Count"), "fieldname": "bounce_count", "fieldtype": "Int", "width": 140},
         {"label": _("Credit Overrides"), "fieldname": "override_count", "fieldtype": "Int", "width": 120},
         {"label": _("Total Exceeded Amount"), "fieldname": "override_exceeded_total", "fieldtype": "Currency", "width": 160},
@@ -65,20 +65,24 @@ def get_data(filters):
         # whether a Sales Order/Invoice gets blocked.
         outstanding = get_balance_on(party_type="Customer", party=customer, company=company, date=as_on_date)
 
-        # Overdue Days = how many days past due the OLDEST unpaid Sales
-        # Invoice is, as of Ageing As On Date - 0/blank if nothing is
-        # actually overdue yet (due date in the future or already paid).
-        oldest_due_date = frappe.db.sql(
+        # Overdue Invoice = the OLDEST unpaid Sales Invoice (by due date) as
+        # of Overdue As On Date - blank if nothing is actually overdue yet
+        # (due date in the future, or already paid). Only ever the single
+        # oldest one, not every unpaid invoice - use the Outstanding column
+        # for the full picture across all of a customer's invoices.
+        overdue_row = frappe.db.sql(
             """
-            select min(due_date)
+            select name, due_date
             from `tabSales Invoice`
             where customer = %(customer)s and company = %(company)s
-            and docstatus = 1 and outstanding_amount > 0
+            and docstatus = 1 and outstanding_amount > 0 and due_date < %(as_on_date)s
+            order by due_date asc
+            limit 1
             """,
-            {"customer": customer, "company": company},
-        )[0][0]
-        overdue_days = (as_on_date - getdate(oldest_due_date)).days if oldest_due_date else 0
-        overdue_days = max(0, overdue_days)
+            {"customer": customer, "company": company, "as_on_date": as_on_date},
+            as_dict=True,
+        )
+        overdue_invoice = overdue_row[0].name if overdue_row else None
 
         pdc_count, pdc_amount = frappe.db.sql(
             """
@@ -123,7 +127,7 @@ def get_data(filters):
             "credit_limit": credit_limit,
             "outstanding_amount": outstanding,
             "available_credit": (flt(credit_limit) - flt(outstanding)) if credit_limit else None,
-            "overdue_days": overdue_days,
+            "overdue_invoice": overdue_invoice,
             "pdc_pending_count": pdc_count,
             "pdc_pending_amount": flt(pdc_amount),
             # How much of what's owed has no pending cheque promised against
