@@ -142,6 +142,9 @@ doc_events = {
 		"validate": "aqiq_pdc.services.bounce_cheque.detect_bounce_cheque",
 		"on_submit": "aqiq_pdc.services.credit_limit.capture_journal_entry_override",
 	},
+	"Unreconcile Payment": {
+		"validate": "aqiq_pdc.services.unreconcile_payment.set_allocation_summary",
+	},
 }
 
 # Scheduled Tasks
