@@ -30,7 +30,7 @@ def get_columns():
         {"label": _("Overdue Invoice"), "fieldname": "overdue_invoice", "fieldtype": "Link", "options": "Sales Invoice", "width": 150},
         {"label": _("PDC Pending Count"), "fieldname": "pdc_pending_count", "fieldtype": "Int", "width": 130},
         {"label": _("PDC Pending Amount"), "fieldname": "pdc_pending_amount", "fieldtype": "Currency", "width": 140},
-        {"label": _("PDC Amount Not Clear"), "fieldname": "pdc_amount_not_covered", "fieldtype": "Currency", "width": 160},
+        {"label": _("PDC Amount Not Received"), "fieldname": "pdc_amount_not_covered", "fieldtype": "Currency", "width": 160},
         {"label": _("Bounce Cheque Count"), "fieldname": "bounce_count", "fieldtype": "Int", "width": 140},
         {"label": _("Credit Overrides"), "fieldname": "override_count", "fieldtype": "Int", "width": 120},
         {"label": _("Total Exceeded Amount"), "fieldname": "override_exceeded_total", "fieldtype": "Currency", "width": 160},
